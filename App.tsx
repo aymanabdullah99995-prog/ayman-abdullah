@@ -1,12 +1,12 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { LinkEntry, Priority } from './types';
-import { DEFAULT_CATEGORIES, LOCAL_STORAGE_KEY, DARK_MODE_KEY } from './constants';
-import AddEditModal from './components/AddEditModal';
-import CategoryModal from './components/CategoryModal';
-import LinkCard from './components/LinkCard';
-import { PlusIcon, MoonIcon, SunIcon, SettingsIcon } from './components/Icons';
+import { useLocalStorage } from './hooks/useLocalStorage.ts';
+import { LinkEntry, Priority } from './types.ts';
+import { DEFAULT_CATEGORIES, LOCAL_STORAGE_KEY, DARK_MODE_KEY } from './constants.ts';
+import AddEditModal from './components/AddEditModal.tsx';
+import CategoryModal from './components/CategoryModal.tsx';
+import LinkCard from './components/LinkCard.tsx';
+import { PlusIcon, MoonIcon, SunIcon, SettingsIcon } from './components/Icons.tsx';
 
 const App: React.FC = () => {
   const [links, setLinks] = useLocalStorage<LinkEntry[]>(LOCAL_STORAGE_KEY, []);
@@ -213,7 +213,6 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {/* عرض الروابط التي لم يعد لها تصنيف موجود (في حال تم حذف التصنيف) */}
             {activeCategory === 'الكل' && filteredLinks.some(l => !categories.includes(l.category)) && (
                <section className="space-y-6">
                 <div className="flex items-center justify-between">
