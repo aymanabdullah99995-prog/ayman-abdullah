@@ -29,30 +29,32 @@ const App: React.FC = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // جلب الروابط
         const { data: linksData, error: linksError } = await supabase
           .from('links')
           .select('*')
           .order('created_at', { ascending: false });
 
         if (linksError) throw linksError;
-        setLinks(linksData.map(item => ({
-          ...item,
-          createdAt: Number(item.created_at),
-          isPinned: item.is_pinned
-        })));
+        
+        if (linksData) {
+          setLinks(linksData.map(item => ({
+            ...item,
+            createdAt: Number(item.created_at),
+            isPinned: item.is_pinned
+          })));
+        }
 
-        // جلب الأقسام
         const { data: catsData, error: catsError } = await supabase
           .from('categories')
           .select('name');
 
         if (catsError) throw catsError;
-        if (catsData.length > 0) {
+        if (catsData && catsData.length > 0) {
           setCategories(catsData.map(c => c.name));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
+        // لا تظهر تنبيه هنا لتجنب إزعاج المستخدم عند أول دخول، سنكتفي بالكونسول
       } finally {
         setIsLoading(false);
       }
@@ -104,16 +106,21 @@ const App: React.FC = () => {
           .select();
 
         if (error) throw error;
-        const inserted = data[0];
-        setLinks(prev => [{
-          ...inserted,
-          createdAt: Number(inserted.created_at),
-          isPinned: inserted.is_pinned
-        }, ...prev]);
+        
+        if (data && data[0]) {
+          const inserted = data[0];
+          setLinks(prev => [{
+            ...inserted,
+            createdAt: Number(inserted.created_at),
+            isPinned: inserted.is_pinned
+          }, ...prev]);
+        }
       }
-    } catch (error) {
-      alert('خطأ في حفظ البيانات سحابياً');
-      console.error(error);
+      setIsModalOpen(false);
+    } catch (error: any) {
+      // إظهار تفاصيل الخطأ بدقة
+      alert(`فشل الحفظ: ${error.message || 'خطأ غير معروف'}. تأكد من إنشاء الجداول في Supabase وتعطيل RLS.`);
+      console.error('Full Error:', error);
     } finally {
       setIsSyncing(false);
       setEditingLink(null);
@@ -128,8 +135,8 @@ const App: React.FC = () => {
       const { error } = await supabase.from('links').delete().eq('id', id);
       if (error) throw error;
       setLinks(prev => prev.filter(l => l.id !== id));
-    } catch (error) {
-      alert('خطأ في حذف الرابط');
+    } catch (error: any) {
+      alert(`خطأ في الحذف: ${error.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -140,16 +147,17 @@ const App: React.FC = () => {
     if (!linkToPin) return;
 
     setIsSyncing(true);
+    const newState = !linkToPin.isPinned;
     try {
       const { error } = await supabase
         .from('links')
-        .update({ is_pinned: !linkToPin.isPinned })
+        .update({ is_pinned: newState })
         .eq('id', id);
 
       if (error) throw error;
-      setLinks(prev => prev.map(l => l.id === id ? { ...l, isPinned: !l.isPinned } : l));
-    } catch (error) {
-      console.error(error);
+      setLinks(prev => prev.map(l => l.id === id ? { ...l, isPinned: newState } : l));
+    } catch (error: any) {
+      alert(`فشل التثبيت: ${error.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -158,21 +166,22 @@ const App: React.FC = () => {
   const handleUpdateCategories = async (newCats: string[]) => {
     setIsSyncing(true);
     try {
-      // مزامنة الأقسام مع Supabase (بسيط: مسح وإعادة إضافة أو إضافة الفرق)
-      // للتبسيط في هذا السياق: سنضيف الجديد ونحذف القديم
       const added = newCats.filter(x => !categories.includes(x));
       const removed = categories.filter(x => !newCats.includes(x));
 
       if (added.length > 0) {
-        await supabase.from('categories').insert(added.map(name => ({ name })));
+        const { error } = await supabase.from('categories').insert(added.map(name => ({ name })));
+        if (error) throw error;
       }
       if (removed.length > 0) {
-        await supabase.from('categories').delete().in('name', removed);
+        const { error } = await supabase.from('categories').delete().in('name', removed);
+        if (error) throw error;
       }
       
       setCategories(newCats);
-    } catch (error) {
-      console.error('Error updating categories:', error);
+    } catch (error: any) {
+      alert(`خطأ في تحديث الأقسام: ${error.message}`);
+      console.error('Category Update Error:', error);
     } finally {
       setIsSyncing(false);
     }
@@ -182,7 +191,7 @@ const App: React.FC = () => {
     return links
       .filter(link => {
         const matchesSearch = link.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                             link.note?.toLowerCase().includes(searchQuery.toLowerCase());
+                             (link.note && link.note.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesCategory = activeCategory === 'الكل' || link.category === activeCategory;
         return matchesSearch && matchesCategory;
       })
