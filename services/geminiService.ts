@@ -1,33 +1,38 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
-// استخدام حماية للتأكد من وجود apiKey قبل البدء
-const getAIClient = () => {
-  const apiKey = (window as any).process?.env?.API_KEY || "";
-  return new GoogleGenAI({ apiKey });
-};
+// Guideline: Always use a named parameter for the API key and process.env.API_KEY directly.
+const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
 
 export async function suggestMetaData(url: string) {
   try {
-    const ai = getAIClient();
+    // Guideline: Call generateContent with the model name and contents in one step.
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `بناءً على هذا الرابط ${url}، اقترح عنواناً مناسباً وتصنيفاً منطقياً. 
-      رد بصيغة JSON فقط تحتوي على 'title' و 'category'.`,
+      contents: `بناءً على هذا الرابط ${url}، اقترح عنواناً مناسباً وتصنيفاً منطقياً. رد بصيغة JSON فقط تحتوي على 'title' و 'category'.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            title: { type: Type.STRING },
-            category: { type: Type.STRING }
+            title: {
+              type: Type.STRING,
+              description: 'عنوان مقترح للرابط.',
+            },
+            category: {
+              type: Type.STRING,
+              description: 'تصنيف منطقي مقترح.',
+            },
           },
-          required: ["title", "category"]
-        }
-      }
+          required: ["title", "category"],
+          propertyOrdering: ["title", "category"],
+        },
+      },
     });
     
-    return JSON.parse(response.text.trim());
+    // Guideline: Access text via .text property, not .text().
+    const text = response.text;
+    if (!text) return null;
+    return JSON.parse(text.trim());
   } catch (error) {
     console.error("Gemini Suggestion Error:", error);
     return null;

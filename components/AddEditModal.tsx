@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import { Priority, LinkEntry } from '../types';
-import { DEFAULT_CATEGORIES } from '../constants';
 import { suggestMetaData } from '../services/geminiService';
 
 interface AddEditModalProps {
@@ -15,7 +13,7 @@ interface AddEditModalProps {
 const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, initialData, categories }) => {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState(DEFAULT_CATEGORIES[0]);
+  const [category, setCategory] = useState('');
   const [priority, setPriority] = useState<Priority>(Priority.NORMAL);
   const [note, setNote] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -35,7 +33,7 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
   const resetForm = () => {
     setUrl('');
     setTitle('');
-    setCategory(DEFAULT_CATEGORIES[0]);
+    setCategory(categories.length > 0 ? categories[0] : 'بدون تصنيف');
     setPriority(Priority.NORMAL);
     setNote('');
   };
@@ -43,7 +41,7 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url || !title) return;
-    onSave({ url, title, category, priority, note });
+    onSave({ url, title, category: category || "بدون تصنيف", priority, note });
     onClose();
   };
 
@@ -118,6 +116,7 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
+                {categories.length === 0 && <option value="بدون تصنيف">بدون تصنيف</option>}
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}

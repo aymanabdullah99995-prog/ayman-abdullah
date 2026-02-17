@@ -1,27 +1,17 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { db } from './services/firebase.ts';
-import { 
-  collection, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  orderBy,
-  setDoc
-} from "firebase/firestore";
-import { LinkEntry, Priority } from './types.ts';
-import { DEFAULT_CATEGORIES, DARK_MODE_KEY } from './constants.ts';
-import AddEditModal from './components/AddEditModal.tsx';
-import CategoryModal from './components/CategoryModal.tsx';
-import LinkCard from './components/LinkCard.tsx';
-import { PlusIcon, MoonIcon, SunIcon, SettingsIcon } from './components/Icons.tsx';
+import { db } from './services/firebase';
+// Use @firebase/firestore directly to fix "no exported member" errors for modular functions
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, setDoc } from '@firebase/firestore';
+import { LinkEntry, Priority } from './types';
+import { DARK_MODE_KEY } from './constants';
+import AddEditModal from './components/AddEditModal';
+import CategoryModal from './components/CategoryModal';
+import LinkCard from './components/LinkCard';
+import { PlusIcon, MoonIcon, SunIcon, SettingsIcon } from './components/Icons';
 
 const App: React.FC = () => {
   const [links, setLinks] = useState<LinkEntry[]>([]);
-  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   
@@ -35,7 +25,6 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
 
-  // المزامنة اللحظية مع Firebase
   useEffect(() => {
     const linksQuery = query(collection(db, "links"), orderBy("createdAt", "desc"));
     
@@ -52,9 +41,8 @@ const App: React.FC = () => {
     });
 
     const unsubscribeCats = onSnapshot(collection(db, "categories"), (snapshot) => {
-      if (!snapshot.empty) {
-        setCategories(snapshot.docs.map(doc => doc.id));
-      }
+      const catsData = snapshot.docs.map(doc => doc.id);
+      setCategories(catsData);
     });
 
     return () => {
@@ -88,7 +76,7 @@ const App: React.FC = () => {
         await addDoc(collection(db, "links"), {
           url: linkData.url!,
           title: linkData.title!,
-          category: linkData.category!,
+          category: linkData.category || "بدون تصنيف",
           priority: linkData.priority || Priority.NORMAL,
           note: linkData.note || "",
           createdAt: Date.now(),
@@ -97,6 +85,7 @@ const App: React.FC = () => {
       }
       setIsModalOpen(false);
     } catch (error: any) {
+      console.error(error);
       alert(`خطأ في الحفظ: ${error.message}`);
     } finally {
       setIsSyncing(false);
@@ -143,8 +132,6 @@ const App: React.FC = () => {
       for (const catName of removed) {
         await deleteDoc(doc(db, "categories", catName));
       }
-      
-      setCategories(newCats);
     } catch (error: any) {
       alert(`خطأ في الأقسام: ${error.message}`);
     } finally {
@@ -189,7 +176,7 @@ const App: React.FC = () => {
             <h1 className="text-3xl font-black text-blue-500 dark:text-blue-400 flex items-center gap-3 tracking-tight">
               <span className="bg-blue-500 text-white p-2.5 rounded-[1.2rem] shadow-lg shadow-blue-200/50 flex items-center justify-center">
                 <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 105.656 5.656l1.1-1.1" />
                 </svg>
               </span>
               ذاكرة الاندلس الرقمية
@@ -198,11 +185,6 @@ const App: React.FC = () => {
               )}
             </h1>
             <div className="flex gap-2 items-center">
-              <div title={isSyncing ? "جاري المزامنة..." : "متصل بـ Firebase"} className={`p-2 rounded-full ${isSyncing ? 'text-slate-300' : 'text-orange-500'}`}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
               <button
                 onClick={() => setIsCatModalOpen(true)}
                 className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 transition-all hover:scale-105 active:scale-95 shadow-sm border border-slate-100 dark:border-slate-700"
@@ -276,13 +258,12 @@ const App: React.FC = () => {
                <PlusIcon className="w-12 h-12 text-blue-200" />
              </div>
             <p className="text-xl font-bold text-slate-400">لا توجد نتائج</p>
-            <p className="text-sm mt-2">ابدأ بتنظيم روابطك المفضلة الآن</p>
           </div>
         ) : (
           <div className="space-y-16">
             {groupedByCategories ? (
               categories.map(cat => {
-                const catLinks = groupedByCategories[cat];
+                const catLinks = (groupedByCategories as any)[cat];
                 if (!catLinks?.length) return null;
                 return (
                   <section key={cat} className="space-y-6">
@@ -296,7 +277,7 @@ const App: React.FC = () => {
                       </span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                      {catLinks.map(link => (
+                      {catLinks.map((link: any) => (
                         <LinkCard
                           key={link.id}
                           link={link}

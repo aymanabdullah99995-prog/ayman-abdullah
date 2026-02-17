@@ -1,10 +1,4 @@
-
 import { Priority } from './types';
-
-export const DEFAULT_CATEGORIES = [
-  'الإدارة العامة',
-  'التعاميم'
-];
 
 export const PRIORITY_COLORS = {
   [Priority.NORMAL]: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300',

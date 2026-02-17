@@ -1,7 +1,10 @@
-
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+// Explicitly use scoped package imports to resolve resolution issues in specific build environments
+import { initializeApp, getApps, getApp } from '@firebase/app';
+import type { FirebaseApp } from '@firebase/app';
+import { getFirestore } from '@firebase/firestore';
+import type { Firestore } from '@firebase/firestore';
+import { getStorage } from '@firebase/storage';
+import type { FirebaseStorage } from '@firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDewC-A3_n0rBh__Zr1fhEbX1qd_F6_ro8",
@@ -13,6 +16,14 @@ const firebaseConfig = {
   measurementId: "G-LH5TE4QL6X"
 };
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+// Singleton pattern to ensure only one Firebase app instance exists
+let app: FirebaseApp;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
+
+// Export specific service instances
+export const db: Firestore = getFirestore(app);
+export const storage: FirebaseStorage = getStorage(app);
