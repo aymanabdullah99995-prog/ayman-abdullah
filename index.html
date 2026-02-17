@@ -37,9 +37,11 @@
         if (overlay) {
           overlay.style.display = 'block';
           overlay.innerHTML = `
-            <h1 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Runtime Error:</h1>
-            <p style="margin-bottom: 0.5rem;">${msg}</p>
-            <pre style="font-size: 0.8rem; background: #fef2f2; padding: 1rem; border-radius: 0.5rem;">${error?.stack || 'No stack trace available'}</pre>
+            <div style="direction: rtl; text-align: right; font-family: sans-serif;">
+              <h1 style="font-size: 1.5rem; font-weight: bold; color: #e11d48; margin-bottom: 1rem;">حدث خطأ في النظام:</h1>
+              <p style="margin-bottom: 1rem; color: #475569;">${msg}</p>
+              <pre style="font-size: 0.8rem; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem; direction: ltr; text-align: left; overflow: auto;">${error?.stack || 'No stack trace available'}</pre>
+            </div>
           `;
         }
         return false;
@@ -52,9 +54,13 @@
     "react-dom": "https://esm.sh/react-dom@19.0.0",
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
     "@google/genai": "https://esm.sh/@google/genai@1.40.0",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.1",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
+    "firebase/storage": "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js",
+    "react/": "https://esm.sh/react@^19.2.4/",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/"
+    "firebase/": "https://esm.sh/firebase@^12.9.0/",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.95.3"
   }
 }
 </script>

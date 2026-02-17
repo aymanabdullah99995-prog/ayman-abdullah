@@ -1,6 +1,17 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { supabase } from './services/supabaseClient.ts';
+import { db } from './services/firebase.ts';
+import { 
+  collection, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  query, 
+  orderBy,
+  setDoc
+} from "firebase/firestore";
 import { LinkEntry, Priority } from './types.ts';
 import { DEFAULT_CATEGORIES, DARK_MODE_KEY } from './constants.ts';
 import AddEditModal from './components/AddEditModal.tsx';
@@ -24,43 +35,32 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
 
-  // جلب البيانات من Supabase عند التحميل
+  // المزامنة اللحظية مع Firebase
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const { data: linksData, error: linksError } = await supabase
-          .from('links')
-          .select('*')
-          .order('created_at', { ascending: false });
+    const linksQuery = query(collection(db, "links"), orderBy("createdAt", "desc"));
+    
+    const unsubscribeLinks = onSnapshot(linksQuery, (snapshot) => {
+      const linksData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as LinkEntry[];
+      setLinks(linksData);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Firebase fetch error:", error);
+      setIsLoading(false);
+    });
 
-        if (linksError) throw linksError;
-        
-        if (linksData) {
-          setLinks(linksData.map(item => ({
-            ...item,
-            createdAt: Number(item.created_at),
-            isPinned: item.is_pinned
-          })));
-        }
-
-        const { data: catsData, error: catsError } = await supabase
-          .from('categories')
-          .select('name');
-
-        if (catsError) throw catsError;
-        if (catsData && catsData.length > 0) {
-          setCategories(catsData.map(c => c.name));
-        }
-      } catch (error: any) {
-        console.error('Error fetching data:', error);
-        // لا تظهر تنبيه هنا لتجنب إزعاج المستخدم عند أول دخول، سنكتفي بالكونسول
-      } finally {
-        setIsLoading(false);
+    const unsubscribeCats = onSnapshot(collection(db, "categories"), (snapshot) => {
+      if (!snapshot.empty) {
+        setCategories(snapshot.docs.map(doc => doc.id));
       }
-    };
+    });
 
-    fetchData();
+    return () => {
+      unsubscribeLinks();
+      unsubscribeCats();
+    };
   }, []);
 
   useEffect(() => {
@@ -76,51 +76,28 @@ const App: React.FC = () => {
     setIsSyncing(true);
     try {
       if (editingLink) {
-        const { error } = await supabase
-          .from('links')
-          .update({
-            url: linkData.url,
-            title: linkData.title,
-            category: linkData.category,
-            priority: linkData.priority,
-            note: linkData.note,
-          })
-          .eq('id', editingLink.id);
-
-        if (error) throw error;
-        setLinks(prev => prev.map(l => l.id === editingLink.id ? { ...l, ...linkData } as LinkEntry : l));
+        const linkDoc = doc(db, "links", editingLink.id);
+        await updateDoc(linkDoc, {
+          url: linkData.url,
+          title: linkData.title,
+          category: linkData.category,
+          priority: linkData.priority,
+          note: linkData.note,
+        });
       } else {
-        const newLinkObj = {
+        await addDoc(collection(db, "links"), {
           url: linkData.url!,
           title: linkData.title!,
           category: linkData.category!,
           priority: linkData.priority || Priority.NORMAL,
-          note: linkData.note,
-          created_at: Date.now(),
-          is_pinned: false,
-        };
-
-        const { data, error } = await supabase
-          .from('links')
-          .insert([newLinkObj])
-          .select();
-
-        if (error) throw error;
-        
-        if (data && data[0]) {
-          const inserted = data[0];
-          setLinks(prev => [{
-            ...inserted,
-            createdAt: Number(inserted.created_at),
-            isPinned: inserted.is_pinned
-          }, ...prev]);
-        }
+          note: linkData.note || "",
+          createdAt: Date.now(),
+          isPinned: false,
+        });
       }
       setIsModalOpen(false);
     } catch (error: any) {
-      // إظهار تفاصيل الخطأ بدقة
-      alert(`فشل الحفظ: ${error.message || 'خطأ غير معروف'}. تأكد من إنشاء الجداول في Supabase وتعطيل RLS.`);
-      console.error('Full Error:', error);
+      alert(`خطأ في الحفظ: ${error.message}`);
     } finally {
       setIsSyncing(false);
       setEditingLink(null);
@@ -129,12 +106,9 @@ const App: React.FC = () => {
 
   const handleDeleteLink = async (id: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا الرابط؟')) return;
-    
     setIsSyncing(true);
     try {
-      const { error } = await supabase.from('links').delete().eq('id', id);
-      if (error) throw error;
-      setLinks(prev => prev.filter(l => l.id !== id));
+      await deleteDoc(doc(db, "links", id));
     } catch (error: any) {
       alert(`خطأ في الحذف: ${error.message}`);
     } finally {
@@ -145,19 +119,13 @@ const App: React.FC = () => {
   const handleTogglePin = async (id: string) => {
     const linkToPin = links.find(l => l.id === id);
     if (!linkToPin) return;
-
     setIsSyncing(true);
-    const newState = !linkToPin.isPinned;
     try {
-      const { error } = await supabase
-        .from('links')
-        .update({ is_pinned: newState })
-        .eq('id', id);
-
-      if (error) throw error;
-      setLinks(prev => prev.map(l => l.id === id ? { ...l, isPinned: newState } : l));
+      await updateDoc(doc(db, "links", id), {
+        isPinned: !linkToPin.isPinned
+      });
     } catch (error: any) {
-      alert(`فشل التثبيت: ${error.message}`);
+      alert(`خطأ في التثبيت: ${error.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -169,19 +137,16 @@ const App: React.FC = () => {
       const added = newCats.filter(x => !categories.includes(x));
       const removed = categories.filter(x => !newCats.includes(x));
 
-      if (added.length > 0) {
-        const { error } = await supabase.from('categories').insert(added.map(name => ({ name })));
-        if (error) throw error;
+      for (const catName of added) {
+        await setDoc(doc(db, "categories", catName), {});
       }
-      if (removed.length > 0) {
-        const { error } = await supabase.from('categories').delete().in('name', removed);
-        if (error) throw error;
+      for (const catName of removed) {
+        await deleteDoc(doc(db, "categories", catName));
       }
       
       setCategories(newCats);
     } catch (error: any) {
-      alert(`خطأ في تحديث الأقسام: ${error.message}`);
-      console.error('Category Update Error:', error);
+      alert(`خطأ في الأقسام: ${error.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -233,9 +198,9 @@ const App: React.FC = () => {
               )}
             </h1>
             <div className="flex gap-2 items-center">
-              <div title={isSyncing ? "جاري المزامنة..." : "متصل بالسحابة"} className={`p-2 rounded-full ${isSyncing ? 'text-slate-300' : 'text-green-500'}`}>
+              <div title={isSyncing ? "جاري المزامنة..." : "متصل بـ Firebase"} className={`p-2 rounded-full ${isSyncing ? 'text-slate-300' : 'text-orange-500'}`}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <button
@@ -303,7 +268,7 @@ const App: React.FC = () => {
         {isLoading ? (
            <div className="flex flex-col items-center justify-center py-32 space-y-4">
               <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-slate-400 font-bold">جاري مزامنة الذاكرة الرقمية...</p>
+              <p className="text-slate-400 font-bold">جاري المزامنة مع Firestore...</p>
            </div>
         ) : filteredLinks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 text-slate-300">
@@ -356,28 +321,6 @@ const App: React.FC = () => {
                   />
                 ))}
               </div>
-            )}
-            
-            {activeCategory === 'الكل' && filteredLinks.some(l => !categories.includes(l.category)) && (
-               <section className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-2 h-8 bg-slate-300 rounded-full"></div>
-                    <h2 className="text-2xl font-black text-slate-400 dark:text-slate-500 tracking-tight">بدون تصنيف</h2>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {filteredLinks.filter(l => !categories.includes(l.category)).map(link => (
-                    <LinkCard
-                      key={link.id}
-                      link={link}
-                      onEdit={(l) => { setEditingLink(l); setIsModalOpen(true); }}
-                      onDelete={handleDeleteLink}
-                      onPin={handleTogglePin}
-                    />
-                  ))}
-                </div>
-              </section>
             )}
           </div>
         )}
