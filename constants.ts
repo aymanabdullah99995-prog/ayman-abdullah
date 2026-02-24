@@ -7,4 +7,5 @@ export const PRIORITY_COLORS = {
 };
 
 export const LOCAL_STORAGE_KEY = 'digital_memory_links_v1';
+export const CATEGORIES_STORAGE_KEY = 'digital_memory_categories_v1';
 export const DARK_MODE_KEY = 'digital_memory_dark_mode';

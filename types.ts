@@ -1,4 +1,3 @@
-
 export enum Priority {
   NORMAL = 'عادي',
   IMPORTANT = 'مهم',
@@ -12,6 +11,7 @@ export interface LinkEntry {
   category: string;
   priority: Priority;
   note?: string;
+  imageUrl?: string;
   createdAt: number;
   isPinned: boolean;
 }

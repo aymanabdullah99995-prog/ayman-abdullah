@@ -16,6 +16,7 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
   const [category, setCategory] = useState('');
   const [priority, setPriority] = useState<Priority>(Priority.NORMAL);
   const [note, setNote] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
 
   useEffect(() => {
@@ -25,6 +26,7 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
       setCategory(initialData.category);
       setPriority(initialData.priority);
       setNote(initialData.note || '');
+      setImageUrl(initialData.imageUrl || '');
     } else {
       resetForm();
     }
@@ -36,12 +38,13 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
     setCategory(categories.length > 0 ? categories[0] : 'بدون تصنيف');
     setPriority(Priority.NORMAL);
     setNote('');
+    setImageUrl('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url || !title) return;
-    onSave({ url, title, category: category || "بدون تصنيف", priority, note });
+    onSave({ url, title, category: category || "بدون تصنيف", priority, note, imageUrl });
     onClose();
   };
 
@@ -66,7 +69,7 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
       <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transition-all transform scale-100">
         <div className="p-6 border-b border-blue-50 dark:border-slate-700 flex justify-between items-center bg-blue-50/20 dark:bg-blue-900/10">
           <h2 className="text-xl font-bold text-slate-700 dark:text-blue-100">
-            {initialData ? 'تعديل البيانات' : 'إضافة رابط ذكي'}
+            {initialData ? 'تعديل الرابط الذكي' : 'إضافة رابط ذكي جديد'}
           </h2>
           <button onClick={onClose} className="text-slate-300 hover:text-pink-400 transition-colors">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,6 +109,17 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
                 </div>
               )}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-500 dark:text-slate-300 mb-2">رابط صورة مصغرة (اختياري)</label>
+            <input
+              type="url"
+              placeholder="https://example.com/image.png"
+              className="w-full px-4 py-3 rounded-2xl border border-blue-50 dark:border-slate-700 bg-blue-50/10 dark:bg-slate-700 focus:ring-2 focus:ring-blue-200 outline-none transition-all placeholder:text-slate-300"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -149,9 +163,9 @@ const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, in
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
-              className="flex-1 bg-orange-400 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-orange-100 active:scale-95"
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-100 dark:shadow-none active:scale-95"
             >
-              حفظ الآن
+              {initialData ? 'تحديث البيانات' : 'حفظ في السحابة'}
             </button>
             <button
               type="button"

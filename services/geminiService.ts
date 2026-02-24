@@ -1,14 +1,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Guideline: Always use a named parameter for the API key and process.env.API_KEY directly.
-const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-
 export async function suggestMetaData(url: string) {
   try {
-    // Guideline: Call generateContent with the model name and contents in one step.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `بناءً على هذا الرابط ${url}، اقترح عنواناً مناسباً وتصنيفاً منطقياً. رد بصيغة JSON فقط تحتوي على 'title' و 'category'.`,
+      contents: `بناءً على هذا الرابط ${url}، اقترح عنواناً مناسباً وتصنيفاً منطقياً. 
+      رد بصيغة JSON فقط تحتوي على 'title' و 'category'.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -16,20 +14,18 @@ export async function suggestMetaData(url: string) {
           properties: {
             title: {
               type: Type.STRING,
-              description: 'عنوان مقترح للرابط.',
+              description: 'The suggested title for the link.'
             },
             category: {
               type: Type.STRING,
-              description: 'تصنيف منطقي مقترح.',
-            },
+              description: 'The suggested logical category.'
+            }
           },
-          required: ["title", "category"],
-          propertyOrdering: ["title", "category"],
-        },
-      },
+          required: ["title", "category"]
+        }
+      }
     });
     
-    // Guideline: Access text via .text property, not .text().
     const text = response.text;
     if (!text) return null;
     return JSON.parse(text.trim());
