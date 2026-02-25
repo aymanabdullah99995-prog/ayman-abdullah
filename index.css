@@ -4,7 +4,15 @@
   --font-sans: "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
 }
 
+@variant dark (&:where(.dark, .dark *));
+
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
   body {
     @apply bg-blue-50 text-slate-900 transition-colors duration-300 dark:bg-slate-900 dark:text-slate-100;
     font-family: 'IBM Plex Sans Arabic', sans-serif;

@@ -155,11 +155,26 @@ const App: React.FC = () => {
         <div className="container mx-auto px-6 py-6 flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-black text-blue-500 dark:text-blue-400 flex items-center gap-3 tracking-tight">
-              <span className="bg-blue-500 text-white p-2.5 rounded-[1.2rem] shadow-lg shadow-blue-200/50 flex items-center justify-center">
-                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 105.656 5.656l1.1-1.1" />
-                </svg>
-              </span>
+              <div className="w-16 h-16 bg-white rounded-2xl shadow-xl shadow-blue-200/50 flex items-center justify-center overflow-hidden border-2 border-blue-100 dark:border-slate-700">
+                <img 
+                  src="https://alandalus.edu.sa/wp-content/uploads/2023/05/logo-1.png" 
+                  alt="Alandalus Logo" 
+                  className="w-full h-full object-contain p-1.5"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    // Fallback to a text-based logo if image fails
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const fallback = document.createElement('span');
+                      fallback.innerText = 'A';
+                      fallback.className = 'text-2xl font-black text-blue-500';
+                      parent.appendChild(fallback);
+                    }
+                  }}
+                />
+              </div>
               ذاكرة الاندلس الرقمية
             </h1>
             <div className="flex gap-2 items-center">
