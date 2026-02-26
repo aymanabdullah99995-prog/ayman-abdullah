@@ -6,7 +6,7 @@ import { DARK_MODE_KEY } from './constants';
 import AddEditModal from './components/AddEditModal';
 import CategoryModal from './components/CategoryModal';
 import LinkCard from './components/LinkCard';
-import { PlusIcon, MoonIcon, SunIcon, SettingsIcon } from './components/Icons';
+import { PlusIcon, MoonIcon, SunIcon, SettingsIcon, LogoutIcon } from './components/Icons';
 
 const App: React.FC = () => {
   const [links, setLinks] = useState<LinkEntry[]>([]);
@@ -23,6 +23,11 @@ const App: React.FC = () => {
   const [editingLink, setEditingLink] = useState<LinkEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('is_authenticated');
+    window.location.href = '/login.html';
+  };
 
   useEffect(() => {
     if (!db) {
@@ -184,6 +189,13 @@ const App: React.FC = () => {
                 title="إدارة التصنيفات"
               >
                 <SettingsIcon />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="p-3 rounded-2xl bg-pink-50 dark:bg-pink-900/20 text-pink-500 dark:text-pink-400 transition-all hover:scale-105 active:scale-95 shadow-sm border border-pink-100 dark:border-pink-900/30"
+                title="تسجيل الخروج"
+              >
+                <LogoutIcon />
               </button>
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
