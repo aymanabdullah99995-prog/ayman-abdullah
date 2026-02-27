@@ -24,6 +24,13 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
 
+  useEffect(() => {
+    const isAuthenticated = sessionStorage.getItem('is_authenticated');
+    if (isAuthenticated !== 'true') {
+      window.location.href = '/login.html';
+    }
+  }, []);
+
   const handleLogout = () => {
     sessionStorage.removeItem('is_authenticated');
     window.location.href = '/login.html';
