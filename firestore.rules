@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Links collection
+    match /links/{linkId} {
+      allow read, write: if true;
+    }
+
+    // Settings collection
+    match /settings/{docId} {
+      allow read, write: if true;
+    }
+
+    // Sections collection
+    match /sections/{sectionId} {
+      allow read, write: if true;
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read, write: if true;
+    }
+  }
+}

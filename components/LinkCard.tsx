@@ -8,9 +8,10 @@ interface LinkCardProps {
   onEdit: (link: LinkEntry) => void;
   onDelete: (id: string) => void;
   onPin: (id: string) => void;
+  isAdmin?: boolean;
 }
 
-const LinkCard: React.FC<LinkCardProps> = ({ link, onEdit, onDelete, onPin }) => {
+const LinkCard: React.FC<LinkCardProps> = ({ link, onEdit, onDelete, onPin, isAdmin }) => {
   return (
     <div className="group bg-white dark:bg-slate-800 rounded-[2.5rem] p-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-blue-50/50 dark:border-slate-700 hover:shadow-[0_25px_50px_-12px_rgba(59,130,246,0.15)] hover:-translate-y-2 transition-all duration-500 flex flex-col h-full relative overflow-hidden">
       
@@ -24,24 +25,28 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, onEdit, onDelete, onPin }) =>
 
       <div className="p-6 pt-4 flex flex-col flex-grow">
         {/* Pin Button Top-Right */}
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
-           <button 
-            onClick={() => onPin(link.id)} 
-            className={`p-2 rounded-xl backdrop-blur-md transition-all shadow-sm ${link.isPinned ? 'bg-blue-500 text-white' : 'bg-white/80 dark:bg-slate-700/80 text-slate-300 hover:text-blue-500'}`}
-          >
-            <PinIcon className="w-4 h-4" />
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="absolute top-4 left-4 z-10 flex gap-2">
+             <button 
+              onClick={() => onPin(link.id)} 
+              className={`p-2 rounded-xl backdrop-blur-md transition-all shadow-sm ${link.isPinned ? 'bg-blue-500 text-white' : 'bg-white/80 dark:bg-slate-700/80 text-slate-300 hover:text-blue-500'}`}
+            >
+              <PinIcon className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         
         <div className="flex justify-between items-start mb-4">
           <span className={`px-4 py-1.5 rounded-2xl text-[12px] font-bold tracking-wide shadow-sm ${PRIORITY_COLORS[link.priority]}`}>
             {link.priority}
           </span>
           
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
-            <button onClick={() => onEdit(link)} className="p-2 text-slate-300 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-xl transition-all"><EditIcon className="w-4 h-4" /></button>
-            <button onClick={() => onDelete(link.id)} className="p-2 text-slate-300 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/30 rounded-xl transition-all"><TrashIcon className="w-4 h-4" /></button>
-          </div>
+          {isAdmin && (
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <button onClick={() => onEdit(link)} className="p-2 text-slate-300 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-xl transition-all"><EditIcon className="w-4 h-4" /></button>
+              <button onClick={() => onDelete(link.id)} className="p-2 text-slate-300 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/30 rounded-xl transition-all"><TrashIcon className="w-4 h-4" /></button>
+            </div>
+          )}
         </div>
 
         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 line-clamp-2 mb-3 leading-snug flex-grow">

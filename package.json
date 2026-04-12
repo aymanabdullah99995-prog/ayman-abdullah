@@ -12,6 +12,8 @@
   "dependencies": {
     "@google/genai": "1.40.0",
     "@tailwindcss/vite": "^4.2.1",
+    "@types/crypto-js": "^4.2.2",
+    "crypto-js": "^4.2.0",
     "firebase": "^12.9.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",

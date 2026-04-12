@@ -17,3 +17,20 @@ export interface LinkEntry {
 }
 
 export type Category = string;
+
+export interface Section {
+  id: string;
+  name: string;
+  passwordHash: string;
+}
+
+export interface Admin {
+  id: string;
+  email: string;
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  authorizedSections: string[]; // List of section names
+}

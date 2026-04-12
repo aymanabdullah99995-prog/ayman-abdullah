@@ -7,8 +7,12 @@ import AddEditModal from './components/AddEditModal';
 import CategoryModal from './components/CategoryModal';
 import LinkCard from './components/LinkCard';
 import { PlusIcon, MoonIcon, SunIcon, SettingsIcon, LogoutIcon } from './components/Icons';
+import { useAuth } from './context/AuthContext';
+import Login from './components/Login';
+import SectionGate from './components/SectionGate';
 
 const App: React.FC = () => {
+  const { isAuthenticated, isAdmin, logout } = useAuth();
   const [links, setLinks] = useState<LinkEntry[]>([]);
   const [categories, setCategories] = useState<string[]>(['العمل', 'شخصي', 'دراسة']);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,23 +29,13 @@ const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
 
   useEffect(() => {
-    const isAuthenticated = sessionStorage.getItem('is_authenticated');
-    if (isAuthenticated !== 'true') {
-      window.location.href = '/login.html';
-    }
-  }, []);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('is_authenticated');
-    window.location.href = '/login.html';
-  };
-
-  useEffect(() => {
     if (!db) {
       setFirebaseError("لا يمكن الاتصال بقاعدة البيانات. تأكد من إعدادات Firebase.");
       setIsLoading(false);
       return;
     }
+
+    if (!isAuthenticated) return;
 
     try {
       const q = query(collection(db, 'links'), orderBy('createdAt', 'desc'));
@@ -59,17 +53,17 @@ const App: React.FC = () => {
       setFirebaseError("حدث خطأ غير متوقع أثناء الاتصال بـ Firestore.");
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!db) return;
+    if (!db || !isAuthenticated) return;
     const unsubscribe = onSnapshot(doc(db, 'settings', 'app_data'), (docSnap) => {
       if (docSnap.exists() && docSnap.data().categories) {
         setCategories(docSnap.data().categories);
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -136,6 +130,7 @@ const App: React.FC = () => {
         const search = searchQuery.toLowerCase();
         const matchesSearch = (link.title?.toLowerCase() || "").includes(search) || 
                              (link.note?.toLowerCase() || "").includes(search);
+        
         const matchesCategory = activeCategory === 'الكل' || link.category === activeCategory;
         return matchesSearch && matchesCategory;
       })
@@ -161,20 +156,23 @@ const App: React.FC = () => {
     return groups;
   }, [filteredLinks, activeCategory]);
 
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
   return (
     <div className="min-h-screen pb-24 bg-white dark:bg-slate-900 transition-colors duration-500">
       <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-blue-50/50 dark:border-slate-800 transition-colors">
         <div className="container mx-auto px-6 py-6 flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-black text-blue-500 dark:text-blue-400 flex items-center gap-3 tracking-tight">
-              <div className="w-16 h-16 bg-white rounded-2xl shadow-xl shadow-blue-200/50 flex items-center justify-center overflow-hidden border-2 border-blue-100 dark:border-slate-700">
+              <div className="w-48 h-16 bg-white rounded-xl shadow-lg shadow-blue-200/50 flex items-center justify-center overflow-hidden border border-blue-100 dark:border-slate-700">
                 <img 
                   src="https://alandalus.edu.sa/wp-content/uploads/2023/05/logo-1.png" 
                   alt="Alandalus Logo" 
-                  className="w-full h-full object-contain p-1.5"
+                  className="w-full h-full object-contain p-2"
                   referrerPolicy="no-referrer"
                   onError={(e) => {
-                    // Fallback to a text-based logo if image fails
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
                     const parent = target.parentElement;
@@ -188,17 +186,24 @@ const App: React.FC = () => {
                 />
               </div>
               ذاكرة الاندلس الرقمية
+              {isAdmin && (
+                <span className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-orange-200 dark:border-orange-800">
+                  مسؤول
+                </span>
+              )}
             </h1>
             <div className="flex gap-2 items-center">
+              {isAdmin && (
+                <button
+                  onClick={() => setIsCatModalOpen(true)}
+                  className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 transition-all hover:scale-105 active:scale-95 shadow-sm border border-slate-100 dark:border-slate-700"
+                  title="إدارة التصنيفات"
+                >
+                  <SettingsIcon />
+                </button>
+              )}
               <button
-                onClick={() => setIsCatModalOpen(true)}
-                className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 transition-all hover:scale-105 active:scale-95 shadow-sm border border-slate-100 dark:border-slate-700"
-                title="إدارة التصنيفات"
-              >
-                <SettingsIcon />
-              </button>
-              <button
-                onClick={handleLogout}
+                onClick={logout}
                 className="p-3 rounded-2xl bg-pink-50 dark:bg-pink-900/20 text-pink-500 dark:text-pink-400 transition-all hover:scale-105 active:scale-95 shadow-sm border border-pink-100 dark:border-pink-900/30"
                 title="تسجيل الخروج"
               >
@@ -277,8 +282,23 @@ const App: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-16">
-                {groupedByCategories ? (
-                  [...categories, "بدون تصنيف"].map(cat => {
+                {activeCategory !== 'الكل' ? (
+                  <SectionGate sectionName={activeCategory}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                      {filteredLinks.map(link => (
+                        <LinkCard
+                          key={link.id}
+                          link={link}
+                          onEdit={(l) => { setEditingLink(l); setIsModalOpen(true); }}
+                          onDelete={handleDeleteLink}
+                          onPin={handleTogglePin}
+                          isAdmin={isAdmin}
+                        />
+                      ))}
+                    </div>
+                  </SectionGate>
+                ) : (
+                  groupedByCategories && [...categories, "بدون تصنيف"].map(cat => {
                     const catLinks = groupedByCategories[cat];
                     if (!catLinks?.length) return null;
                     return (
@@ -306,18 +326,6 @@ const App: React.FC = () => {
                       </section>
                     );
                   })
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                    {filteredLinks.map(link => (
-                      <LinkCard
-                        key={link.id}
-                        link={link}
-                        onEdit={(l) => { setEditingLink(l); setIsModalOpen(true); }}
-                        onDelete={handleDeleteLink}
-                        onPin={handleTogglePin}
-                      />
-                    ))}
-                  </div>
                 )}
               </div>
             )}
@@ -325,12 +333,14 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <button
-        onClick={() => { setEditingLink(null); setIsModalOpen(true); }}
-        className="fixed bottom-10 left-10 w-20 h-20 bg-orange-400 text-white rounded-[2rem] shadow-[0_20px_50px_rgba(251,146,60,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 transform hover:rotate-6"
-      >
-        <PlusIcon className="w-10 h-10" />
-      </button>
+      {isAdmin && (
+        <button
+          onClick={() => { setEditingLink(null); setIsModalOpen(true); }}
+          className="fixed bottom-10 left-10 w-20 h-20 bg-orange-400 text-white rounded-[2rem] shadow-[0_20px_50px_rgba(251,146,60,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 transform hover:rotate-6"
+        >
+          <PlusIcon className="w-10 h-10" />
+        </button>
+      )}
 
       <AddEditModal
         isOpen={isModalOpen}

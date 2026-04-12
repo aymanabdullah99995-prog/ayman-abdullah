@@ -1,0 +1,72 @@
+{
+  "entities": {
+    "LinkEntry": {
+      "title": "Link Entry",
+      "description": "A digital link resource",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "priority": { "type": "string", "enum": ["عادي", "مهم", "عاجل"] },
+        "note": { "type": "string" },
+        "isPinned": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["url", "title", "category", "priority"]
+    },
+    "Section": {
+      "title": "Section",
+      "description": "A protected section with its own password",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "passwordHash": { "type": "string" }
+      },
+      "required": ["id", "name", "passwordHash"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "An administrator with full access",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" }
+      },
+      "required": ["id", "email"]
+    }
+  },
+  "firestore": {
+    "/links/{linkId}": {
+      "schema": "LinkEntry",
+      "description": "Collection of all saved links"
+    },
+    "/sections/{sectionId}": {
+      "schema": "Section",
+      "description": "Collection of protected sections and their passwords"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Collection of administrators"
+    },
+    "/settings/global_config": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "globalPasswordHash": { "type": "string" }
+        }
+      },
+      "description": "Global application configuration"
+    },
+    "/settings/admin_config": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "adminPasswordHash": { "type": "string" }
+        }
+      },
+      "description": "Admin application configuration"
+    }
+  }
+}

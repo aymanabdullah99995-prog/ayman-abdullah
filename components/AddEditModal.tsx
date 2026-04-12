@@ -10,7 +10,13 @@ interface AddEditModalProps {
   categories: string[];
 }
 
-const AddEditModal: React.FC<AddEditModalProps> = ({ isOpen, onClose, onSave, initialData, categories }) => {
+const AddEditModal: React.FC<AddEditModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  initialData, 
+  categories 
+}) => {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
