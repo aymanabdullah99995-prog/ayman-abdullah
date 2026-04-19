@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { AuthState } from '../types';
 
 interface AuthContextType extends AuthState {
-  login: (isAdmin?: boolean) => void;
+  login: (isAdmin?: boolean, initialSection?: string) => void;
   logout: () => void;
   authorizeSection: (sectionName: string) => void;
   isSectionAuthorized: (sectionName: string) => boolean;
@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isAuthenticated: false,
       isAdmin: false,
       authorizedSections: [],
+      lastUsedSection: undefined,
     };
   });
 
@@ -33,11 +34,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem(AUTH_KEY, JSON.stringify(state));
   }, [state]);
 
-  const login = (isAdmin: boolean = false) => {
+  const login = (isAdmin: boolean = false, initialSection?: string) => {
     setState(prev => ({
       ...prev,
       isAuthenticated: true,
       isAdmin: isAdmin,
+      authorizedSections: initialSection 
+        ? [...new Set([...prev.authorizedSections, initialSection])] 
+        : prev.authorizedSections,
+      lastUsedSection: initialSection || prev.lastUsedSection
     }));
   };
 

@@ -33,4 +33,5 @@ export interface AuthState {
   isAuthenticated: boolean;
   isAdmin: boolean;
   authorizedSections: string[]; // List of section names
+  lastUsedSection?: string;
 }

@@ -12,7 +12,7 @@ import Login from './components/Login';
 import SectionGate from './components/SectionGate';
 
 const App: React.FC = () => {
-  const { isAuthenticated, isAdmin, logout } = useAuth();
+  const { isAuthenticated, isAdmin, logout, isSectionAuthorized, lastUsedSection } = useAuth();
   const [links, setLinks] = useState<LinkEntry[]>([]);
   const [categories, setCategories] = useState<string[]>(['العمل', 'شخصي', 'دراسة']);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +27,12 @@ const App: React.FC = () => {
   const [editingLink, setEditingLink] = useState<LinkEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
+
+  useEffect(() => {
+    if (isAuthenticated && !isAdmin && lastUsedSection) {
+      setActiveCategory(lastUsedSection);
+    }
+  }, [isAuthenticated, isAdmin, lastUsedSection]);
 
   useEffect(() => {
     if (!db) {
@@ -333,7 +339,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {isAdmin && (
+      {(isAdmin || (activeCategory !== 'الكل' && isSectionAuthorized(activeCategory))) && (
         <button
           onClick={() => { setEditingLink(null); setIsModalOpen(true); }}
           className="fixed bottom-10 left-10 w-20 h-20 bg-orange-400 text-white rounded-[2rem] shadow-[0_20px_50px_rgba(251,146,60,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 transform hover:rotate-6"
@@ -348,6 +354,7 @@ const App: React.FC = () => {
         onSave={handleSaveLink}
         initialData={editingLink}
         categories={categories}
+        fixedCategory={!isAdmin && activeCategory !== 'الكل' ? activeCategory : null}
       />
       
       <CategoryModal 

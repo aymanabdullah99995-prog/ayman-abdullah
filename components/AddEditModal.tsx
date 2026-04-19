@@ -8,6 +8,7 @@ interface AddEditModalProps {
   onSave: (link: Partial<LinkEntry>) => void;
   initialData?: LinkEntry | null;
   categories: string[];
+  fixedCategory?: string | null;
 }
 
 const AddEditModal: React.FC<AddEditModalProps> = ({ 
@@ -15,7 +16,8 @@ const AddEditModal: React.FC<AddEditModalProps> = ({
   onClose, 
   onSave, 
   initialData, 
-  categories 
+  categories,
+  fixedCategory
 }) => {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
@@ -36,12 +38,12 @@ const AddEditModal: React.FC<AddEditModalProps> = ({
     } else {
       resetForm();
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, fixedCategory]);
 
   const resetForm = () => {
     setUrl('');
     setTitle('');
-    setCategory(categories.length > 0 ? categories[0] : 'بدون تصنيف');
+    setCategory(fixedCategory || (categories.length > 0 ? categories[0] : 'بدون تصنيف'));
     setPriority(Priority.NORMAL);
     setNote('');
     setImageUrl('');
@@ -50,7 +52,8 @@ const AddEditModal: React.FC<AddEditModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url || !title) return;
-    onSave({ url, title, category: category || "بدون تصنيف", priority, note, imageUrl });
+    const finalCategory = fixedCategory || category || "بدون تصنيف";
+    onSave({ url, title, category: finalCategory, priority, note, imageUrl });
     onClose();
   };
 
@@ -132,15 +135,17 @@ const AddEditModal: React.FC<AddEditModalProps> = ({
             <div>
               <label className="block text-sm font-bold text-slate-500 dark:text-slate-300 mb-2">التصنيف</label>
               <select
-                className="w-full px-4 py-3 rounded-2xl border border-blue-50 dark:border-slate-700 bg-blue-50/10 dark:bg-slate-700 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                className={`w-full px-4 py-3 rounded-2xl border border-blue-50 dark:border-slate-700 bg-blue-50/10 dark:bg-slate-700 focus:ring-2 focus:ring-blue-200 outline-none transition-all ${fixedCategory ? 'opacity-50 cursor-not-allowed' : ''}`}
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => !fixedCategory && setCategory(e.target.value)}
+                disabled={!!fixedCategory}
               >
                 {categories.length === 0 && <option value="بدون تصنيف">بدون تصنيف</option>}
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
+              {fixedCategory && <p className="text-[10px] text-blue-400 mt-1 font-bold italic">التصنيف مثبت لهذا القسم</p>}
             </div>
             <div>
               <label className="block text-sm font-bold text-slate-500 dark:text-slate-300 mb-2">الأهمية</label>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { verifyPassword, hashPassword } from '../lib/hash';
 
 const Login: React.FC = () => {
@@ -59,7 +59,19 @@ const Login: React.FC = () => {
         }
       }
 
-      // 3. First-time Bootstrap (Initial Setup)
+      // 3. Check Section-Specific Passwords
+      // Allow users to enter the platform using a section password
+      const hashedSearch = hashPassword(password);
+      const sectionsQuery = query(collection(db, 'sections'), where('passwordHash', '==', hashedSearch));
+      const sectionSnapshot = await getDocs(sectionsQuery);
+      
+      if (!sectionSnapshot.empty) {
+        const sectionData = sectionSnapshot.docs[0].data();
+        login(false, sectionData.name);
+        return;
+      }
+
+      // 4. First-time Bootstrap (Initial Setup)
       // If admin_config doesn't exist, allow '6200' to create it
       if (!adminDoc.exists() && password === '6200') {
         const hash = hashPassword('6200');
