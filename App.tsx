@@ -12,7 +12,7 @@ import Login from './components/Login';
 import SectionGate from './components/SectionGate';
 
 const App: React.FC = () => {
-  const { isAuthenticated, isAdmin, logout, isSectionAuthorized, lastUsedSection } = useAuth();
+  const { isAuthenticated, isAdmin, isGlobalUser, logout, isSectionAuthorized, isSectionVisible, lastUsedSection } = useAuth();
   const [links, setLinks] = useState<LinkEntry[]>([]);
   const [categories, setCategories] = useState<string[]>(['العمل', 'شخصي', 'دراسة']);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,10 +29,18 @@ const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
 
   useEffect(() => {
-    if (isAuthenticated && !isAdmin && lastUsedSection) {
-      setActiveCategory(lastUsedSection);
+    // If authenticated but not admin, ensure we are not on 'الكل'
+    if (isAuthenticated && !isAdmin && activeCategory === 'الكل') {
+      if (lastUsedSection) {
+        setActiveCategory(lastUsedSection);
+      } else {
+        const firstVisible = categories.find(cat => isSectionVisible(cat));
+        if (firstVisible) {
+          setActiveCategory(firstVisible);
+        }
+      }
     }
-  }, [isAuthenticated, isAdmin, lastUsedSection]);
+  }, [isAuthenticated, isAdmin, activeCategory, lastUsedSection, categories, isSectionVisible]);
 
   useEffect(() => {
     if (!db) {
@@ -137,6 +145,9 @@ const App: React.FC = () => {
         const matchesSearch = (link.title?.toLowerCase() || "").includes(search) || 
                              (link.note?.toLowerCase() || "").includes(search);
         
+        // Safety check: only show visible sections
+        if (!isSectionVisible(link.category)) return false;
+
         const matchesCategory = activeCategory === 'الكل' || link.category === activeCategory;
         return matchesSearch && matchesCategory;
       })
@@ -254,17 +265,19 @@ const App: React.FC = () => {
         ) : (
           <>
             <div className="flex items-center gap-3 overflow-x-auto pb-6 mb-8 no-scrollbar scroll-smooth">
-              <button
-                onClick={() => setActiveCategory('الكل')}
-                className={`whitespace-nowrap px-8 py-3 rounded-2xl text-sm font-black transition-all shadow-sm ${
-                  activeCategory === 'الكل'
-                    ? 'bg-blue-500 text-white shadow-blue-200 scale-105'
-                    : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-blue-200'
-                }`}
-              >
-                الكل
-              </button>
-              {categories.map(cat => (
+              {isAdmin && (
+                <button
+                  onClick={() => setActiveCategory('الكل')}
+                  className={`whitespace-nowrap px-8 py-3 rounded-2xl text-sm font-black transition-all shadow-sm ${
+                    activeCategory === 'الكل'
+                      ? 'bg-blue-500 text-white shadow-blue-200 scale-105'
+                      : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-blue-200'
+                  }`}
+                >
+                  الكل
+                </button>
+              )}
+              {categories.filter(cat => isSectionVisible(cat)).map(cat => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}

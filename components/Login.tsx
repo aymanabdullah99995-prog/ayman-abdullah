@@ -44,7 +44,7 @@ const Login: React.FC = () => {
       if (globalDoc.exists()) {
         const { globalPasswordHash } = globalDoc.data();
         if (verifyPassword(password, globalPasswordHash)) {
-          login(false);
+          login(false, undefined, true);
           return;
         }
       }

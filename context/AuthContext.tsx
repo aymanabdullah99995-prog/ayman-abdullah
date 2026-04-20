@@ -2,10 +2,11 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { AuthState } from '../types';
 
 interface AuthContextType extends AuthState {
-  login: (isAdmin?: boolean, initialSection?: string) => void;
+  login: (isAdmin?: boolean, initialSection?: string, isGlobal?: boolean) => void;
   logout: () => void;
   authorizeSection: (sectionName: string) => void;
   isSectionAuthorized: (sectionName: string) => boolean;
+  isSectionVisible: (sectionName: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,6 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return {
       isAuthenticated: false,
       isAdmin: false,
+      isGlobalUser: false,
       authorizedSections: [],
       lastUsedSection: undefined,
     };
@@ -34,11 +36,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem(AUTH_KEY, JSON.stringify(state));
   }, [state]);
 
-  const login = (isAdmin: boolean = false, initialSection?: string) => {
+  const login = (isAdmin: boolean = false, initialSection?: string, isGlobal: boolean = false) => {
     setState(prev => ({
       ...prev,
       isAuthenticated: true,
       isAdmin: isAdmin,
+      isGlobalUser: isGlobal,
       authorizedSections: initialSection 
         ? [...new Set([...prev.authorizedSections, initialSection])] 
         : prev.authorizedSections,
@@ -50,6 +53,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({
       isAuthenticated: false,
       isAdmin: false,
+      isGlobalUser: false,
       authorizedSections: [],
     });
     localStorage.removeItem(AUTH_KEY);
@@ -70,8 +74,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return state.authorizedSections.includes(sectionName);
   };
 
+  const isSectionVisible = (sectionName: string) => {
+    if (state.isAdmin || state.isGlobalUser) return true;
+    return state.authorizedSections.includes(sectionName);
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, authorizeSection, isSectionAuthorized }}>
+    <AuthContext.Provider value={{ ...state, login, logout, authorizeSection, isSectionAuthorized, isSectionVisible }}>
       {children}
     </AuthContext.Provider>
   );
