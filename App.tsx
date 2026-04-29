@@ -6,7 +6,7 @@ import { DARK_MODE_KEY } from './constants';
 import AddEditModal from './components/AddEditModal';
 import CategoryModal from './components/CategoryModal';
 import LinkCard from './components/LinkCard';
-import { PlusIcon, MoonIcon, SunIcon, SettingsIcon, LogoutIcon } from './components/Icons';
+import { PlusIcon, MoonIcon, SunIcon, SettingsIcon, LogoutIcon, ChevronLeftIcon, ChevronRightIcon } from './components/Icons';
 import { useAuth } from './context/AuthContext';
 import Login from './components/Login';
 import SectionGate from './components/SectionGate';
@@ -27,6 +27,46 @@ const App: React.FC = () => {
   const [editingLink, setEditingLink] = useState<LinkEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
+  
+  // Drag to scroll logic for categories
+  const categoryScrollRef = React.useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!categoryScrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - categoryScrollRef.current.offsetLeft);
+    setScrollLeft(categoryScrollRef.current.scrollLeft);
+  };
+
+  const onMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const onMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !categoryScrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - categoryScrollRef.current.offsetLeft;
+    // In RTL, scrollLeft is usually negative or behavior varies. 
+    // We adjust the walk calculation to feel natural.
+    const walk = (x - startX) * 2; 
+    categoryScrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (!categoryScrollRef.current) return;
+    const scrollAmount = 300;
+    categoryScrollRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+  };
 
   useEffect(() => {
     // If authenticated but not admin, ensure we are not on 'الكل'
@@ -264,7 +304,35 @@ const App: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 overflow-x-auto pb-6 mb-8 no-scrollbar scroll-smooth">
+            <div className="relative group/nav-scroll mb-8">
+              {/* Left Arrow Button */}
+              <button 
+                onClick={() => scrollCategories('left')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-2 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-blue-500 hover:scale-110 transition-all opacity-0 group-hover/nav-scroll:opacity-100 hidden md:block"
+              >
+                <ChevronLeftIcon className="w-6 h-6" />
+              </button>
+
+              {/* Right Arrow Button */}
+              <button 
+                onClick={() => scrollCategories('right')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-2 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 text-slate-400 hover:text-blue-500 hover:scale-110 transition-all opacity-0 group-hover/nav-scroll:opacity-100 hidden md:block"
+              >
+                <ChevronRightIcon className="w-6 h-6" />
+              </button>
+
+              {/* Gradient Masks */}
+              <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-blue-50 dark:from-slate-900 to-transparent z-10 pointer-events-none transition-opacity opacity-50 md:opacity-100"></div>
+              <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-blue-50 dark:from-slate-900 to-transparent z-10 pointer-events-none transition-opacity opacity-50 md:opacity-100"></div>
+              
+              <div 
+                ref={categoryScrollRef}
+                onMouseDown={onMouseDown}
+                onMouseLeave={onMouseLeave}
+                onMouseUp={onMouseUp}
+                onMouseMove={onMouseMove}
+                className={`flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar scroll-smooth cursor-grab active:cursor-grabbing select-none px-12`}
+              >
               {isAdmin && (
                 <button
                   onClick={() => setActiveCategory('الكل')}
@@ -291,6 +359,7 @@ const App: React.FC = () => {
                 </button>
               ))}
             </div>
+          </div>
 
             {filteredLinks.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 text-slate-300">
