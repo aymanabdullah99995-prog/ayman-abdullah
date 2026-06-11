@@ -26,6 +26,18 @@ const App: React.FC = () => {
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<LinkEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
   const [activeCategory, setActiveCategory] = useState<string | 'الكل'>('الكل');
   
   // Drag to scroll logic for categories
@@ -181,7 +193,7 @@ const App: React.FC = () => {
   const filteredLinks = useMemo(() => {
     return links
       .filter(link => {
-        const search = searchQuery.toLowerCase();
+        const search = debouncedSearchQuery.toLowerCase();
         const matchesSearch = (link.title?.toLowerCase() || "").includes(search) || 
                              (link.note?.toLowerCase() || "").includes(search);
         
@@ -200,7 +212,7 @@ const App: React.FC = () => {
         }
         return b.createdAt - a.createdAt;
       });
-  }, [links, searchQuery, activeCategory]);
+  }, [links, debouncedSearchQuery, activeCategory]);
 
   const groupedByCategories = useMemo(() => {
     if (activeCategory !== 'الكل') return null;
@@ -220,10 +232,10 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen pb-24 bg-white dark:bg-slate-900 transition-colors duration-500">
       <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-blue-50/50 dark:border-slate-800 transition-colors">
-        <div className="container mx-auto px-6 py-6 flex flex-col gap-6">
+        <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 flex flex-col gap-4 md:gap-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-black text-blue-500 dark:text-blue-400 flex items-center gap-3 tracking-tight">
-              <div className="w-48 h-16 bg-white rounded-xl shadow-lg shadow-blue-200/50 flex items-center justify-center overflow-hidden border border-blue-100 dark:border-slate-700">
+            <h1 className="text-2xl md:text-3xl font-black text-blue-500 dark:text-blue-400 flex items-center gap-2 md:gap-3 tracking-tight">
+              <div className="w-32 md:w-48 h-12 md:h-16 bg-white rounded-xl shadow-lg shadow-blue-200/50 flex items-center justify-center overflow-hidden border border-blue-100 dark:border-slate-700">
                 <img 
                   src="https://alandalus.edu.sa/wp-content/uploads/2023/05/logo-1.png" 
                   alt="Alandalus Logo" 
@@ -242,7 +254,7 @@ const App: React.FC = () => {
                   }}
                 />
               </div>
-              ذاكرة الاندلس الرقمية
+              مدارس الاندلس - فرع المنار
               {isAdmin && (
                 <span className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-orange-200 dark:border-orange-800">
                   مسؤول
@@ -275,19 +287,46 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <input
               type="text"
-              placeholder="ابحث في ذاكرتك السحابية..."
-              className="w-full px-6 py-4 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 border-none focus:ring-[3px] focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition-all shadow-inner placeholder:text-slate-300 dark:placeholder:text-slate-500"
+              placeholder="ابحث في ذاكرتك..."
+              className="w-full px-5 py-3 md:px-6 md:py-4 rounded-2xl md:rounded-[1.5rem] bg-slate-50 dark:bg-slate-800 border-none focus:ring-[3px] focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition-all shadow-inner placeholder:text-slate-300 dark:placeholder:text-slate-500 text-sm md:text-base"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <div className="flex items-center justify-between text-xs md:text-sm text-slate-500 dark:text-slate-400 font-bold px-2">
+              <div className="flex items-center gap-2">
+                {searchQuery !== debouncedSearchQuery ? (
+                  <span className="flex items-center gap-2 text-blue-500 dark:text-blue-400 animate-pulse">
+                    <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                    جاري البحث...
+                  </span>
+                ) : (
+                  <span>
+                    {searchQuery ? (
+                      <>تم العثور على <span className="text-blue-500 dark:text-blue-400 font-extrabold">{filteredLinks.length}</span> {filteredLinks.length === 1 ? "نتيجة مطابقة" : "نتائج مطابقة"}</>
+                    ) : (
+                      <>الروابط المتاحة حالياً: <span className="text-blue-500 dark:text-blue-400 font-extrabold">{filteredLinks.length}</span></>
+                    )}
+                  </span>
+                )}
+              </div>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-pink-500 dark:text-pink-400 hover:text-pink-600 transition-colors pointer-events-auto cursor-pointer"
+                >
+                  إعادة تعيين
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 md:px-6 py-6 md:py-8">
         {firebaseError && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-6 rounded-3xl mb-8 flex items-center gap-4 text-red-600 dark:text-red-400 font-bold">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -300,11 +339,11 @@ const App: React.FC = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-40">
             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-slate-400 animate-pulse font-bold">جاري تحميل البيانات...</p>
+            <p className="text-slate-400 animate-pulse font-bold text-center px-6">جاري تحميل البيانات...</p>
           </div>
         ) : (
           <>
-            <div className="relative group/nav-scroll mb-8">
+            <div className="relative group/nav-scroll mb-6 md:mb-8">
               {/* Left Arrow Button */}
               <button 
                 onClick={() => scrollCategories('left')}
@@ -322,8 +361,8 @@ const App: React.FC = () => {
               </button>
 
               {/* Gradient Masks */}
-              <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-blue-50 dark:from-slate-900 to-transparent z-10 pointer-events-none transition-opacity opacity-50 md:opacity-100"></div>
-              <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-blue-50 dark:from-slate-900 to-transparent z-10 pointer-events-none transition-opacity opacity-50 md:opacity-100"></div>
+              <div className="absolute inset-y-0 left-0 w-8 md:w-24 bg-gradient-to-r from-blue-50 dark:from-slate-900 to-transparent z-10 pointer-events-none opacity-40"></div>
+              <div className="absolute inset-y-0 right-0 w-8 md:w-24 bg-gradient-to-l from-blue-50 dark:from-slate-900 to-transparent z-10 pointer-events-none opacity-40"></div>
               
               <div 
                 ref={categoryScrollRef}
@@ -331,12 +370,12 @@ const App: React.FC = () => {
                 onMouseLeave={onMouseLeave}
                 onMouseUp={onMouseUp}
                 onMouseMove={onMouseMove}
-                className={`flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar scroll-smooth cursor-grab active:cursor-grabbing select-none px-12`}
+                className={`flex items-center gap-2 md:gap-3 overflow-x-auto pb-4 md:pb-6 no-scrollbar md:custom-scrollbar scroll-smooth cursor-grab active:cursor-grabbing select-none px-4 md:px-12`}
               >
               {isAdmin && (
                 <button
                   onClick={() => setActiveCategory('الكل')}
-                  className={`whitespace-nowrap px-8 py-3 rounded-2xl text-sm font-black transition-all shadow-sm ${
+                  className={`whitespace-nowrap px-6 md:px-8 py-2.5 md:py-3 rounded-xl md:rounded-2xl text-[13px] md:text-sm font-black transition-all shadow-sm ${
                     activeCategory === 'الكل'
                       ? 'bg-blue-500 text-white shadow-blue-200 scale-105'
                       : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-blue-200'
@@ -349,7 +388,7 @@ const App: React.FC = () => {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`whitespace-nowrap px-8 py-3 rounded-2xl text-sm font-black transition-all shadow-sm ${
+                  className={`whitespace-nowrap px-6 md:px-8 py-2.5 md:py-3 rounded-xl md:rounded-2xl text-[13px] md:text-sm font-black transition-all shadow-sm ${
                     activeCategory === cat
                       ? 'bg-blue-500 text-white shadow-blue-200 scale-105'
                       : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-blue-200'
@@ -424,9 +463,9 @@ const App: React.FC = () => {
       {(isAdmin || (activeCategory !== 'الكل' && isSectionAuthorized(activeCategory))) && (
         <button
           onClick={() => { setEditingLink(null); setIsModalOpen(true); }}
-          className="fixed bottom-10 left-10 w-20 h-20 bg-orange-400 text-white rounded-[2rem] shadow-[0_20px_50px_rgba(251,146,60,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 transform hover:rotate-6"
+          className="fixed bottom-6 right-6 md:bottom-10 md:left-10 w-16 h-16 md:w-20 md:h-20 bg-orange-400 text-white rounded-2xl md:rounded-[2rem] shadow-[0_20px_50px_rgba(251,146,60,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 transform hover:rotate-6"
         >
-          <PlusIcon className="w-10 h-10" />
+          <PlusIcon className="w-8 h-8 md:w-10 md:h-10" />
         </button>
       )}
 

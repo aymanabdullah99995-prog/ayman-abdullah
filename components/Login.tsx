@@ -104,7 +104,7 @@ const Login: React.FC = () => {
               referrerPolicy="no-referrer"
             />
           </div>
-          <h1 className="text-3xl font-black text-blue-500 dark:text-blue-400 tracking-tight">ذاكرة الاندلس الرقمية</h1>
+          <h1 className="text-3xl font-black text-blue-500 dark:text-blue-400 tracking-tight">مدارس الاندلس - فرع المنار</h1>
           <div className="bg-blue-500/10 text-blue-500 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-blue-500/20">
             النظام المطور v2.0
           </div>

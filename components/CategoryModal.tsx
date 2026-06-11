@@ -162,11 +162,11 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, categori
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-800 rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col transition-all transform scale-100 max-h-[90vh]">
-        <div className="p-8 border-b border-blue-50 dark:border-slate-700 flex justify-between items-center bg-blue-50/20 dark:bg-blue-900/10">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-slate-800 rounded-t-[2.5rem] md:rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col transition-all transform scale-100 max-h-[95vh] md:max-h-[90vh]">
+        <div className="p-6 md:p-8 border-b border-blue-50 dark:border-slate-700 flex justify-between items-center bg-blue-50/20 dark:bg-blue-900/10">
           <div>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-blue-100">إدارة الأمان والأقسام</h2>
+            <h2 className="text-xl md:text-2xl font-black text-slate-800 dark:text-blue-100">إدارة الأمان والأقسام</h2>
             <p className="text-xs text-slate-400 font-bold mt-1">تحكم في كلمات المرور وصلاحيات الوصول</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-2xl hover:bg-pink-50 dark:hover:bg-pink-900/20 text-slate-300 hover:text-pink-500 transition-all">
@@ -176,46 +176,46 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, categori
           </button>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-8 space-y-10 custom-scrollbar">
+        <div className="flex-grow overflow-y-auto p-6 md:p-8 space-y-8 md:space-y-10 custom-scrollbar">
           {successMsg && (
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 p-4 rounded-2xl text-center font-black animate-in slide-in-from-top duration-300 border border-emerald-100 dark:border-emerald-800">
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 p-4 rounded-xl md:rounded-2xl text-center font-black animate-in slide-in-from-top duration-300 border border-emerald-100 dark:border-emerald-800 text-sm">
               {successMsg}
             </div>
           )}
 
           {/* Global Security Section */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-4">
+          <section className="space-y-4 md:space-y-6">
+            <div className="flex items-center gap-3">
               <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
-              <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">الأمان العام للمنصة</h3>
+              <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">الأمان العام</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-50 dark:bg-slate-700/30 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-700 space-y-4">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-wider">كلمة المرور العامة (للمستخدمين)</label>
+              <div className="bg-slate-50 dark:bg-slate-700/30 p-5 md:p-6 rounded-2xl md:rounded-[2rem] border border-slate-100 dark:border-slate-700 space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">كلمة المرور العامة</label>
                 <div className="flex gap-2">
                   <input
                     type="password"
-                    placeholder="كلمة مرور جديدة..."
-                    className="flex-grow px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                    placeholder="جديدة..."
+                    className="flex-grow px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-blue-400 text-sm shadow-sm"
                     value={globalPass}
                     onChange={(e) => setGlobalPass(e.target.value)}
                   />
-                  <button onClick={handleUpdateGlobalPass} className="bg-blue-500 text-white p-3 rounded-xl hover:bg-blue-600 transition-all active:scale-90">
+                  <button onClick={handleUpdateGlobalPass} className="bg-blue-500 text-white p-2.5 md:p-3 rounded-xl hover:bg-blue-600 transition-all active:scale-90">
                     <CheckIcon className="w-5 h-5" />
                   </button>
                 </div>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-700/30 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-700 space-y-4">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-wider">كلمة مرور المسؤول (Admin)</label>
+              <div className="bg-slate-50 dark:bg-slate-700/30 p-5 md:p-6 rounded-2xl md:rounded-[2rem] border border-slate-100 dark:border-slate-700 space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">كلمة مرور المسؤول</label>
                 <div className="flex gap-2">
                   <input
                     type="password"
-                    placeholder="كلمة مرور جديدة..."
-                    className="flex-grow px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-orange-400 text-sm"
+                    placeholder="جديدة..."
+                    className="flex-grow px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-orange-400 text-sm shadow-sm"
                     value={adminPass}
                     onChange={(e) => setAdminPass(e.target.value)}
                   />
-                  <button onClick={handleUpdateAdminPass} className="bg-orange-500 text-white p-3 rounded-xl hover:bg-orange-600 transition-all active:scale-90">
+                  <button onClick={handleUpdateAdminPass} className="bg-orange-500 text-white p-2.5 md:p-3 rounded-xl hover:bg-orange-600 transition-all active:scale-90">
                     <CheckIcon className="w-5 h-5" />
                   </button>
                 </div>
@@ -224,24 +224,24 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, categori
           </section>
 
           {/* Add New Section */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-4">
+          <section className="space-y-4 md:space-y-6">
+            <div className="flex items-center gap-3">
               <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
               <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">إضافة قسم جديد</h3>
             </div>
-            <form onSubmit={handleAdd} className="bg-blue-50/30 dark:bg-blue-900/10 p-6 rounded-[2.5rem] border border-blue-100/50 dark:border-blue-900/20 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleAdd} className="bg-blue-50/30 dark:bg-blue-900/10 p-5 md:p-6 rounded-2xl md:rounded-[2.5rem] border border-blue-100/50 dark:border-blue-900/20 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
                   type="text"
-                  placeholder="اسم القسم (مثلاً: المعلمين)"
-                  className="px-6 py-4 rounded-2xl bg-white dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-blue-400 font-bold"
+                  placeholder="اسم القسم"
+                  className="px-5 py-3 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-blue-400 font-bold text-sm"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                 />
                 <input
                   type="password"
                   placeholder="كلمة مرور القسم"
-                  className="px-6 py-4 rounded-2xl bg-white dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-blue-400 font-bold"
+                  className="px-5 py-3 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-blue-400 font-bold text-sm"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
@@ -249,10 +249,10 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, categori
               <button 
                 type="submit"
                 disabled={isSaving}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-black py-4 rounded-xl md:rounded-2xl transition-all shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <PlusIcon className="w-6 h-6" />
-                <span>إنشاء القسم المحمي</span>
+                <span>إنشاء القسم</span>
               </button>
             </form>
           </section>
