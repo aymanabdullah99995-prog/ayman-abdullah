@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { verifyPassword, hashPassword } from '../lib/hash';
+import { AlandalusLogo } from './AlandalusLogo';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -95,20 +96,17 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-2xl border border-blue-50 dark:border-slate-700 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
-        <div className="flex flex-col items-center text-center space-y-4">
-          <div className="w-32 h-32 bg-white rounded-3xl shadow-lg shadow-blue-100 dark:shadow-none flex items-center justify-center overflow-hidden border border-blue-50 dark:border-slate-700 p-4">
-            <img 
-              src="https://alandalus.edu.sa/wp-content/uploads/2023/05/logo-1.png" 
-              alt="Alandalus Logo" 
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
+        <div className="flex flex-col items-center text-center space-y-6">
+          <div className="bg-white dark:bg-slate-900 px-8 py-6 rounded-[2rem] shadow-xl border border-blue-50/50 dark:border-slate-800 flex items-center justify-center transition-all">
+            <AlandalusLogo variant="full" />
           </div>
-          <h1 className="text-3xl font-black text-blue-500 dark:text-blue-400 tracking-tight">مدارس الاندلس - فرع المنار</h1>
-          <div className="bg-blue-500/10 text-blue-500 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-blue-500/20">
-            النظام المطور v2.0
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black text-slate-800 dark:text-blue-100 tracking-tight">مدارس الاندلس - فرع المنار</h1>
+            <div className="inline-flex bg-blue-500/10 text-blue-500 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-blue-500/20">
+              النظام المطور v2.0
+            </div>
           </div>
-          <p className="text-slate-400 dark:text-slate-500 font-bold">يرجى إدخال كلمة المرور للمتابعة</p>
+          <p className="text-slate-400 dark:text-slate-500 font-bold text-sm">يرجى إدخال كلمة المرور للمتابعة</p>
           {connectionStatus === 'error' && (
             <p className="text-red-500 text-xs mt-2 font-bold">⚠️ فشل الاتصال بقاعدة البيانات. تأكد من جدار الحماية أو الاتصال.</p>
           )}

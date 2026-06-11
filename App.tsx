@@ -10,6 +10,7 @@ import { PlusIcon, MoonIcon, SunIcon, SettingsIcon, LogoutIcon, ChevronLeftIcon,
 import { useAuth } from './context/AuthContext';
 import Login from './components/Login';
 import SectionGate from './components/SectionGate';
+import { AlandalusLogo } from './components/AlandalusLogo';
 
 const App: React.FC = () => {
   const { isAuthenticated, isAdmin, isGlobalUser, logout, isSectionAuthorized, isSectionVisible, lastUsedSection } = useAuth();
@@ -234,33 +235,24 @@ const App: React.FC = () => {
       <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-blue-50/50 dark:border-slate-800 transition-colors">
         <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 flex flex-col gap-4 md:gap-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl md:text-3xl font-black text-blue-500 dark:text-blue-400 flex items-center gap-2 md:gap-3 tracking-tight">
-              <div className="w-32 md:w-48 h-12 md:h-16 bg-white rounded-xl shadow-lg shadow-blue-200/50 flex items-center justify-center overflow-hidden border border-blue-100 dark:border-slate-700">
-                <img 
-                  src="https://alandalus.edu.sa/wp-content/uploads/2023/05/logo-1.png" 
-                  alt="Alandalus Logo" 
-                  className="w-full h-full object-contain p-2"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent) {
-                      const fallback = document.createElement('span');
-                      fallback.innerText = 'A';
-                      fallback.className = 'text-2xl font-black text-blue-500';
-                      parent.appendChild(fallback);
-                    }
-                  }}
-                />
+            <div className="flex items-center gap-3 md:gap-4 select-none animate-in fade-in duration-500">
+              <div className="bg-white dark:bg-slate-800 px-3 py-1.5 md:px-4 md:py-2 rounded-2xl shadow-md border border-slate-100 dark:border-slate-700 flex items-center justify-center">
+                <AlandalusLogo variant="compact" className="scale-90" />
               </div>
-              مدارس الاندلس - فرع المنار
+              <div className="flex flex-col text-right">
+                <h1 className="text-lg md:text-2xl font-black text-blue-900 dark:text-blue-100 leading-tight">
+                  مدارس الأندلس
+                </h1>
+                <p className="text-[10px] md:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  فرع المنار
+                </p>
+              </div>
               {isAdmin && (
-                <span className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-orange-200 dark:border-orange-800">
+                <span className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-orange-200 dark:border-orange-800 self-center">
                   مسؤول
                 </span>
               )}
-            </h1>
+            </div>
             <div className="flex gap-2 items-center">
               {isAdmin && (
                 <button
