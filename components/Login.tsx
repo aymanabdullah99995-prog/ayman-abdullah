@@ -94,19 +94,19 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-2xl border border-blue-50 dark:border-slate-700 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
-        <div className="flex flex-col items-center text-center space-y-6">
-          <div className="bg-white dark:bg-slate-900 px-8 py-6 rounded-[2rem] shadow-xl border border-blue-50/50 dark:border-slate-800 flex items-center justify-center transition-all">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4 md:p-6">
+      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 shadow-2xl border border-blue-50 dark:border-slate-700 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
+        <div className="flex flex-col items-center text-center space-y-4 md:space-y-6">
+          <div className="bg-white dark:bg-slate-900 px-6 py-4 md:px-8 md:py-6 rounded-2xl md:rounded-[2rem] shadow-xl border border-blue-50/50 dark:border-slate-800 flex items-center justify-center transition-all">
             <AlandalusLogo variant="full" />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-black text-slate-800 dark:text-blue-100 tracking-tight">مدارس الاندلس - فرع المنار</h1>
+          <div className="space-y-1.5 md:space-y-2">
+            <h1 className="text-xl md:text-2xl font-black text-slate-800 dark:text-blue-100 tracking-tight">مدارس الاندلس - فرع المنار</h1>
             <div className="inline-flex bg-blue-500/10 text-blue-500 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border border-blue-500/20">
               النظام المطور v2.0
             </div>
           </div>
-          <p className="text-slate-400 dark:text-slate-500 font-bold text-sm">يرجى إدخال كلمة المرور للمتابعة</p>
+          <p className="text-slate-400 dark:text-slate-500 font-bold text-xs md:text-sm">يرجى إدخال كلمة المرور للمتابعة</p>
           {connectionStatus === 'error' && (
             <p className="text-red-500 text-xs mt-2 font-bold">⚠️ فشل الاتصال بقاعدة البيانات. تأكد من جدار الحماية أو الاتصال.</p>
           )}
