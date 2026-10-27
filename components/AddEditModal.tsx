@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Priority, LinkEntry } from '../types';
 import { suggestMetaData } from '../services/geminiService';
+import { LockClosedIcon, SendIcon } from './Icons';
 
 interface AddEditModalProps {
   isOpen: boolean;
@@ -26,6 +27,11 @@ const AddEditModal: React.FC<AddEditModalProps> = ({
   const [note, setNote] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
+  
+  // Cross-department private transfer state
+  const [isPrivateTransfer, setIsPrivateTransfer] = useState(false);
+  const [senderCategory, setSenderCategory] = useState('');
+  const [targetCategory, setTargetCategory] = useState('');
 
   useEffect(() => {
     if (initialData) {
@@ -35,25 +41,66 @@ const AddEditModal: React.FC<AddEditModalProps> = ({
       setPriority(initialData.priority);
       setNote(initialData.note || '');
       setImageUrl(initialData.imageUrl || '');
+      if (initialData.isPrivate && initialData.targetCategory) {
+        setIsPrivateTransfer(true);
+        setSenderCategory(initialData.senderCategory || initialData.category);
+        setTargetCategory(initialData.targetCategory);
+      } else {
+        setIsPrivateTransfer(false);
+        setSenderCategory(fixedCategory || initialData.category || (categories[0] || ''));
+        setTargetCategory(categories.find(c => c !== (fixedCategory || initialData.category)) || '');
+      }
     } else {
       resetForm();
     }
-  }, [initialData, isOpen, fixedCategory]);
+  }, [initialData, isOpen, fixedCategory, categories]);
 
   const resetForm = () => {
     setUrl('');
     setTitle('');
-    setCategory(fixedCategory || (categories.length > 0 ? categories[0] : 'بدون تصنيف'));
+    const baseCat = fixedCategory || (categories.length > 0 ? categories[0] : 'بدون تصنيف');
+    setCategory(baseCat);
     setPriority(Priority.NORMAL);
     setNote('');
     setImageUrl('');
+    setIsPrivateTransfer(false);
+    setSenderCategory(baseCat);
+    const potentialTarget = categories.find(c => c !== baseCat) || '';
+    setTargetCategory(potentialTarget);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url || !title) return;
-    const finalCategory = fixedCategory || category || "بدون تصنيف";
-    onSave({ url, title, category: finalCategory, priority, note, imageUrl });
+
+    if (isPrivateTransfer) {
+      const actualSender = senderCategory || fixedCategory || category || 'بدون تصنيف';
+      const actualTarget = targetCategory || categories.find(c => c !== actualSender) || actualSender;
+      onSave({ 
+        url, 
+        title, 
+        category: actualTarget, 
+        priority, 
+        note, 
+        imageUrl,
+        isPrivate: true,
+        senderCategory: actualSender,
+        targetCategory: actualTarget
+      });
+    } else {
+      const finalCategory = fixedCategory || category || "بدون تصنيف";
+      onSave({ 
+        url, 
+        title, 
+        category: finalCategory, 
+        priority, 
+        note, 
+        imageUrl,
+        isPrivate: false,
+        senderCategory: undefined,
+        targetCategory: undefined
+      });
+    }
     onClose();
   };
 
@@ -63,7 +110,7 @@ const AddEditModal: React.FC<AddEditModalProps> = ({
       const suggestion = await suggestMetaData(url);
       if (suggestion) {
         setTitle(suggestion.title || '');
-        if (categories.includes(suggestion.category)) {
+        if (categories.includes(suggestion.category) && !fixedCategory && !isPrivateTransfer) {
           setCategory(suggestion.category);
         }
       }
@@ -131,21 +178,103 @@ const AddEditModal: React.FC<AddEditModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">التصنيف</label>
-              <select
-                className={`w-full px-5 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl border border-blue-50 dark:border-slate-700 bg-blue-50/10 dark:bg-slate-700 focus:ring-2 focus:ring-blue-400 outline-none transition-all text-sm font-bold ${fixedCategory ? 'opacity-50 cursor-not-allowed' : ''}`}
-                value={category}
-                onChange={(e) => !fixedCategory && setCategory(e.target.value)}
-                disabled={!!fixedCategory}
-              >
-                {categories.length === 0 && <option value="بدون تصنيف">بدون تصنيف</option>}
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+          {/* Inter-Department Private Dispatch Option */}
+          <div className="p-4 rounded-2xl border transition-all bg-slate-50/70 dark:bg-slate-700/40 border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between cursor-pointer" onClick={() => setIsPrivateTransfer(!isPrivateTransfer)}>
+              <div className="flex items-center gap-2.5">
+                <div className={`p-2 rounded-xl transition-colors ${isPrivateTransfer ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' : 'bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-300'}`}>
+                  <SendIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                    إرسال خاص لقسم آخر
+                    <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                      <LockClosedIcon className="w-3 h-3" /> سري
+                    </span>
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-400 font-medium">
+                    مشاركة الرابط بين قسمك وقسم محدد فقط دون اطلاع باقي الأقسام
+                  </p>
+                </div>
+              </div>
+              
+              <label className="relative inline-flex items-center cursor-pointer pointer-events-none">
+                <input 
+                  type="checkbox" 
+                  checked={isPrivateTransfer} 
+                  onChange={() => {}} 
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+              </label>
             </div>
+
+            {isPrivateTransfer && (
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-3 animate-in fade-in duration-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-black text-slate-500 dark:text-slate-400">القسم المُرسِل</label>
+                    <select
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none"
+                      value={senderCategory}
+                      onChange={(e) => setSenderCategory(e.target.value)}
+                      disabled={!!fixedCategory}
+                    >
+                      {categories.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                      <span>القسم المُستقبِل (الموجه إليه الرابط)</span>
+                    </label>
+                    <select
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 text-xs font-black text-indigo-900 dark:text-indigo-100 outline-none focus:ring-2 focus:ring-indigo-400"
+                      value={targetCategory}
+                      onChange={(e) => setTargetCategory(e.target.value)}
+                    >
+                      {categories.filter(c => c !== senderCategory).map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-800 dark:text-amber-300 font-bold leading-relaxed">
+                  <LockClosedIcon className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>تأكيد الخصوصية: لن يتمكن أي قسم آخر من رؤية هذا الرابط عدا <strong>{senderCategory}</strong> و <strong>{targetCategory || 'القسم المحدد'}</strong> وإدارة النظام.</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {!isPrivateTransfer ? (
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">التصنيف</label>
+                <select
+                  className={`w-full px-5 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl border border-blue-50 dark:border-slate-700 bg-blue-50/10 dark:bg-slate-700 focus:ring-2 focus:ring-blue-400 outline-none transition-all text-sm font-bold ${fixedCategory ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  value={category}
+                  onChange={(e) => !fixedCategory && setCategory(e.target.value)}
+                  disabled={!!fixedCategory}
+                >
+                  {categories.length === 0 && <option value="بدون تصنيف">بدون تصنيف</option>}
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">نوع الرابط</label>
+                <div className="w-full px-5 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 text-sm font-bold flex items-center gap-2">
+                  <LockClosedIcon className="w-4 h-4" />
+                  <span>إرسال خاص بين قسمين</span>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">الأهمية</label>
               <select

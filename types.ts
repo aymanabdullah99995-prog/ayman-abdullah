@@ -14,6 +14,9 @@ export interface LinkEntry {
   imageUrl?: string;
   createdAt: number;
   isPinned: boolean;
+  isPrivate?: boolean;
+  senderCategory?: string;
+  targetCategory?: string;
 }
 
 export type Category = string;

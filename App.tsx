@@ -165,13 +165,37 @@ const App: React.FC = () => {
     setEditingLink(null);
   };
 
+  const canUserDeleteLink = (link: LinkEntry) => {
+    if (isAdmin) return true;
+    if (isSectionAuthorized(link.category)) return true;
+    if (link.senderCategory && isSectionAuthorized(link.senderCategory)) return true;
+    if (link.targetCategory && isSectionAuthorized(link.targetCategory)) return true;
+    return false;
+  };
+
+  const canUserEditLink = (link: LinkEntry) => {
+    if (isAdmin) return true;
+    if (isSectionAuthorized(link.category)) return true;
+    if (link.senderCategory && isSectionAuthorized(link.senderCategory)) return true;
+    return false;
+  };
+
   const handleDeleteLink = async (id: string) => {
     if (!db) return;
-    if (!window.confirm('هل أنت متأكد من حذف هذا الرابط؟')) return;
+    const targetLink = links.find(l => l.id === id);
+    if (!targetLink) return;
+
+    if (!canUserDeleteLink(targetLink)) {
+      alert("عذراً، صلاحية حذف هذا الرابط مخصصة لمنسق القسم أو إدارة النظام فقط.");
+      return;
+    }
+
+    if (!window.confirm(`هل أنت متأكد من حذف هذا الرابط نهائياً؟\n"${targetLink.title}"`)) return;
     try {
       await deleteDoc(doc(db, 'links', id));
     } catch (error) {
-      alert("فشل في الحذف من السحابة");
+      console.error("Error deleting link:", error);
+      alert("فشل في حذف الرابط من السحابة.");
     }
   };
 
@@ -195,15 +219,48 @@ const App: React.FC = () => {
   const filteredLinks = useMemo(() => {
     return links
       .filter(link => {
-        const search = debouncedSearchQuery.toLowerCase();
-        const matchesSearch = (link.title?.toLowerCase() || "").includes(search) || 
-                             (link.note?.toLowerCase() || "").includes(search);
-        
-        // Safety check: only show visible sections
-        if (!isSectionVisible(link.category)) return false;
+        // 1. Private Transfer Cross-Department Confidentiality:
+        if (link.isPrivate) {
+          const canViewPrivate = 
+            isAdmin || 
+            (link.senderCategory && isSectionAuthorized(link.senderCategory)) ||
+            (link.targetCategory && isSectionAuthorized(link.targetCategory)) ||
+            isSectionAuthorized(link.category);
+          
+          // STRICT RULE: If the user doesn't belong to sender, recipient, or admin, HIDE COMPLETELY!
+          if (!canViewPrivate) {
+            return false;
+          }
+        } else {
+          // Regular link section visibility check
+          if (!isSectionVisible(link.category)) return false;
+        }
 
-        const matchesCategory = activeCategory === 'الكل' || link.category === activeCategory;
-        return matchesSearch && matchesCategory;
+        // 2. Search query filter
+        const search = debouncedSearchQuery.toLowerCase();
+        const matchesSearch = !search ||
+          (link.title?.toLowerCase() || "").includes(search) || 
+          (link.note?.toLowerCase() || "").includes(search) ||
+          (link.senderCategory?.toLowerCase() || "").includes(search) ||
+          (link.targetCategory?.toLowerCase() || "").includes(search);
+        
+        if (!matchesSearch) return false;
+
+        // 3. Tab category filtering
+        if (activeCategory === 'الكل') {
+          return true;
+        }
+
+        if (link.isPrivate) {
+          // In category views: show in recipient department OR sender department
+          return (
+            link.category === activeCategory || 
+            link.targetCategory === activeCategory || 
+            link.senderCategory === activeCategory
+          );
+        }
+
+        return link.category === activeCategory;
       })
       .sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
@@ -214,7 +271,7 @@ const App: React.FC = () => {
         }
         return b.createdAt - a.createdAt;
       });
-  }, [links, debouncedSearchQuery, activeCategory]);
+  }, [links, debouncedSearchQuery, activeCategory, isAdmin, isSectionAuthorized, isSectionVisible]);
 
   const groupedByCategories = useMemo(() => {
     if (activeCategory !== 'الكل') return null;
@@ -415,6 +472,9 @@ const App: React.FC = () => {
                           onDelete={handleDeleteLink}
                           onPin={handleTogglePin}
                           isAdmin={isAdmin}
+                          canDelete={canUserDeleteLink(link)}
+                          canEdit={canUserEditLink(link)}
+                          currentSection={activeCategory}
                         />
                       ))}
                     </div>
@@ -442,6 +502,10 @@ const App: React.FC = () => {
                               onEdit={(l) => { setEditingLink(l); setIsModalOpen(true); }}
                               onDelete={handleDeleteLink}
                               onPin={handleTogglePin}
+                              isAdmin={isAdmin}
+                              canDelete={canUserDeleteLink(link)}
+                              canEdit={canUserEditLink(link)}
+                              currentSection={cat}
                             />
                           ))}
                         </div>
